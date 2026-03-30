@@ -1,0 +1,55 @@
+name: Daily Price Update & Deploy
+
+on:
+  schedule:
+    # Hafta içi 15:30 UTC (18:30 İstanbul) - BIST kapanışından ~30dk sonra
+    - cron: '30 15 * * 1-5'
+  workflow_dispatch: {}  # Manuel tetikleme (test için)
+
+jobs:
+  update-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Python dependencies
+        run: pip install -r scripts/requirements.txt
+
+      - name: Update closing prices
+        run: python scripts/update_prices_only.py
+
+      - name: Commit and push data changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/ public/data/
+          git diff --staged --quiet || git commit -m "chore: update daily prices $(date +%Y-%m-%d) [skip netlify]"
+          git push
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Build Astro site
+        run: npm run build
+
+      - name: Deploy to Netlify
+        run: npx netlify-cli deploy --prod --dir=dist --message "Daily deploy $(date +%Y-%m-%d)"
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
