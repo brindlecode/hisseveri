@@ -12,14 +12,14 @@
   "ipoDate": "",
   "price": {
     "last": 6.63,
-    "change": 0.33,
-    "changePercent": 5.24,
+    "change": 0.0,
+    "changePercent": 0.0,
     "open": 0,
     "high": 0,
     "low": 0,
-    "volume": 35385452,
+    "volume": 13549143,
     "marketCap": 0,
-    "updatedAt": "2026-11-05"
+    "updatedAt": "2026-11-06"
   },
   "ratios": {
     "pe": null,
